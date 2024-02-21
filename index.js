@@ -1,13 +1,12 @@
 const express = require('express');
 const mysql = require('mysql2/promise');
-const ExcelJS = require('exceljs');
 const { queryData } = require('./attendance');
 
 const app = express();
 
 require('dotenv').config();
 
-const db = await initializeDatabase();
+export const db = await initializeDatabase();
 
 const PORT = process.env.PORT || 3000;
 
@@ -19,16 +18,11 @@ app.get('/export-attendance', async (req, res) => {
     try {
         const { username, startDate, endDate } = req.query;
 
-        this.queryData(req);
+        const processedRecords = this.handleRequest(req);
 
         if (!username || !startDate || !endDate) {
           return res.status(400).json({ error: 'Missing username or date range parameters' });
         }
-    
-        const [rows] = await db.query(
-          'SELECT * FROM slack_attendance WHERE username = ? AND datetime BETWEEN ? AND ?',
-          [username, new Date(startDate), new Date(endDate)]
-        );  
 
         const fileName = await generateExcelReport(processedRecords);
     

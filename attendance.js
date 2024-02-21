@@ -1,4 +1,6 @@
-export function queryData(req) {
+export async function handleRequest(req) {
+    const rows = await queryDatabaseData(req)
+
     const attendanceRecords = rows.sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
 
     const startDate = new Date(req.query.startDate);
@@ -10,15 +12,15 @@ export function queryData(req) {
         const recordDate = new Date(record.datetime).setHours(0, 0, 0, 0);
         return recordDate === currentDate.setHours(0, 0, 0, 0);
     });
-    const processedRecords = this.getData(dailyRecords);
+    const processedRecords = this.proccessData(dailyRecords);
     
-    currentDate.setDate(currentDate.getDate() + 1);
+    currentDate.setDate(currentDate.getDate()); // currentDate + 1
 
     return processedRecords;
     }
 }
 
-export function getData(dailyRecords) {
+export function proccessData(dailyRecords) {
     
     let firstInTime, lastOutTime, totalBreakDuration = 0;
     let isBreak = false, breakStartTime;
@@ -54,4 +56,11 @@ export function getData(dailyRecords) {
     });
 
     return processedRecordsArray
+}
+
+async function queryDatabaseData(requestData) {
+  return await db.query(
+    'SELECT * FROM slack_attendance WHERE username = ? AND datetime BETWEEN ? AND ?',
+    [requestData.username, new Date(requestData.startDate), new Date(requestData.endDate)]
+  );
 }
